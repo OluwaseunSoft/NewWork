@@ -19,31 +19,33 @@ public partial class _Default : System.Web.UI.Page
 
     protected void Batch_Update(object sender, EventArgs e)
     {
-        //Upload and save the file
-        string excelPath = Server.MapPath("~/Files/") + Path.GetFileName(FileUpload1.PostedFile.FileName);
-        FileUpload1.SaveAs(excelPath);
-
-        string conString = string.Empty;
-        string extension = Path.GetExtension(FileUpload1.PostedFile.FileName);
-        switch (extension)
+        if (FileUpload1.HasFile)
         {
-            case ".xls": //Excel 97-03
-                conString = ConfigurationManager.ConnectionStrings["Excel03ConString"].ConnectionString;
-                break;
-            case ".xlsx": //Excel 07 or higher
-                conString = ConfigurationManager.ConnectionStrings["Excel07+ConString"].ConnectionString;
-                break;
+            //Upload and save the file
+            string excelPath = Server.MapPath("~/Files/") + Path.GetFileName(FileUpload1.PostedFile.FileName);
+            FileUpload1.SaveAs(excelPath);
 
-        }
-        conString = string.Format(conString, excelPath);
-        using (OleDbConnection excel_con = new OleDbConnection(conString))
-        {
-            excel_con.Open();
-            string sheet1 = excel_con.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null).Rows[0]["TABLE_NAME"].ToString();
-            DataTable dtExcelData = new DataTable();
+            string conString = string.Empty;
+            string extension = Path.GetExtension(FileUpload1.PostedFile.FileName);
+            switch (extension)
+            {
+                case ".xls": //Excel 97-03
+                    conString = ConfigurationManager.ConnectionStrings["Excel03ConString"].ConnectionString;
+                    break;
+                case ".xlsx": //Excel 07 or higher
+                    conString = ConfigurationManager.ConnectionStrings["Excel07+ConString"].ConnectionString;
+                    break;
 
-            //[OPTIONAL]: It is recommended as otherwise the data will be considered as String by default.
-            dtExcelData.Columns.AddRange(new DataColumn[8] { new DataColumn("CUSTOMER NAME", typeof(string)),
+            }
+
+            conString = string.Format(conString, excelPath);
+            using (OleDbConnection excel_con = new OleDbConnection(conString))
+            {
+                excel_con.Open();
+                string sheet1 = excel_con.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null).Rows[0]["TABLE_NAME"].ToString();
+                DataTable dtExcelData = new DataTable();
+                //[OPTIONAL]: It is recommended as otherwise the data will be considered as String by default.
+                dtExcelData.Columns.AddRange(new DataColumn[8] { new DataColumn("CUSTOMER NAME", typeof(string)),
                 new DataColumn("FirstCentralReferenceNo", typeof(int)),
                 new DataColumn("AccountNo", typeof(string)),
                 new DataColumn("CurrentBalanceAmt", typeof(int)),
@@ -52,25 +54,56 @@ public partial class _Default : System.Web.UI.Page
                 new DataColumn("LoanClassification", typeof(string)),
                 new DataColumn("AccountStatusCode", typeof(string)), });
 
-            using (OleDbDataAdapter oda = new OleDbDataAdapter("SELECT * FROM [" + sheet1 + "]", excel_con))
-            {
-                oda.Fill(dtExcelData);
-            }
-            excel_con.Close();
 
-            string consString = ConfigurationManager.ConnectionStrings["iremedybatchupdate"].ConnectionString;
-            using (SqlConnection con = new SqlConnection(consString))
-            {
-                using (SqlCommand cmd = new SqlCommand("Batch_Update_SP"))
+
+                DataColumnCollection column = dtExcelData.Columns;
+
+                    // Column cols in dt.Columns
+                foreach (string columns in column)
+                    {
+                        
+                        Console.WriteLine(columns);
+                        lblMessage.Text = (columns);
+                        lblMessage.ForeColor = System.Drawing.Color.Red;
+                        lblMessage.Visible = true;
+                    }
+               
+
+
+
+                using (OleDbDataAdapter oda = new OleDbDataAdapter("SELECT * FROM [" + sheet1 + "]", excel_con))
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Connection = con;
-                    cmd.Parameters.AddWithValue("@tblBatchUpdate", dtExcelData);
-                    con.Open();
-                    cmd.ExecuteNonQuery();
-                    con.Close();
+                    oda.Fill(dtExcelData);
+                }
+
+                excel_con.Close();
+               
+                string consString = ConfigurationManager.ConnectionStrings["iremedybatchupdate"].ConnectionString;
+                using (SqlConnection con = new SqlConnection(consString))
+                {
+                    using (SqlCommand cmd = new SqlCommand("Batch_Update_SP"))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Connection = con;
+                        cmd.Parameters.AddWithValue("@tblBatchUpdate", dtExcelData);
+                        con.Open();
+                        Label1.Text = "Data retrieved successfully! ";
+                        Label1.ForeColor = System.Drawing.Color.Green;
+                        Label1.Visible = true;
+                        cmd.ExecuteNonQuery();
+                        con.Close();
+                    }
                 }
             }
         }
+        else
+        {
+            Label1.Text = "Please select an excel file first";
+            Label1.ForeColor = System.Drawing.Color.Red;
+            Label1.Visible = true;
+        }
     }
+
+   
+
 }

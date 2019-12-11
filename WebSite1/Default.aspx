@@ -13,7 +13,7 @@
     <asp:FileUpload ID="FileUpload1" runat="server" />
 
     <asp:Button Text="Upload" OnClick="Batch_Update" runat="server" />
-
+        <asp:Label ID="Label1" runat="server" Visible="false" Text="Notification" ></asp:Label>
     </div>
     </form>
 </body>
