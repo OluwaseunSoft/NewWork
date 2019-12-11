@@ -63,11 +63,9 @@ public partial class code_batch_update : System.Web.UI.Page
                     }
                     excel_con.Close();
 
-                    for (int i = 1; i <= dtExcelData.Columns.Count; i++) 
+                    foreach (DataColumn dc in ds.Tables[0].Columns)
                     {
-                        
-                            lbx_DataFileHeader.Items.Add(dtExcelData.Columns[i].ColumnName.ToString());
-                       
+                        ListBox1.Items.Add(dc.ColumnName);
                     }
 
                     string consString = ConfigurationManager.ConnectionStrings["iremedybatchupdate"].ConnectionString;
